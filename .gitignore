@@ -1,0 +1,9 @@
+# Ignore all exe
+*.exe
+
+
+# Ignore the .vscode directory
+.vscode/
+
+# Ignore temporary files
+*.tmp
