@@ -34,7 +34,7 @@ public:
         cv.notify_one(); //Notify waiting threads that a new element is available
     }
 
-    // Pop and return the oldest element from the queue. Throws an exception if the queue is empty.
+    // Pop and return the oldest element from the queue. Blocks forever if the queue is empty.
     T Pop(){
         std::unique_lock<std::mutex> lock(mtx);
         cv.wait(lock, [this]() { return count > 0; }); //Thread only wakes up when count > 0
@@ -43,6 +43,20 @@ public:
         oldest = (oldest + 1) % capacity;
         count--;
         return(element);
+    }
+
+    // Pop and return the oldest element from the queue. Blocks for milliseconds if the queue is empty.
+    T PopWithTimeout(int milliseconds) {
+        std::unique_lock<std::mutex> lock(mtx);
+
+        bool ready = cv.wait_for(lock, std::chrono::milliseconds(milliseconds), [this]() { return count > 0; });
+        if (!ready) {
+            throw std::runtime_error("Timeout waiting for element");
+        }
+        T element = content[oldest];
+        oldest = (oldest + 1) % capacity;
+        count--;
+        return element;
     }
 
     int Count(){

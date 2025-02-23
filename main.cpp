@@ -15,7 +15,7 @@ void producer(Queue<int>& q) {
 void consumer(Queue<int>& q) {
     // Pop three integers.
     for (int i = 0; i < 3; ++i) {
-        int value = q.Pop();
+        int value = q.PopWithTimeout(900);
         std::cout << "Consumer: Popped " << value << std::endl;
     }
 }
