@@ -2,6 +2,8 @@
 #define QUEUE_H
 
 #include <stdexcept>
+#include <mutex>
+#include <condition_variable>
 
 template <typename T>
 class Queue {
@@ -18,7 +20,7 @@ public:
 
     // Push an element into the queue If the queue is full, the oldest element is dropped.
     void Push(T element) {
-
+        std::unique_lock<std::mutex> lock(mtx);
         if (count == capacity) {
             // The queue is full, so drop the oldest element.
             oldest = (oldest + 1) % capacity;
@@ -28,14 +30,14 @@ public:
         content[next] = element; //inserts value
         next = (next + 1) % capacity; // defines next position to write in, while handling loop around
         count++; //increases the size of the Queue
+
+        cv.notify_one(); //Notify waiting threads that a new element is available
     }
 
     // Pop and return the oldest element from the queue. Throws an exception if the queue is empty.
     T Pop(){
-
-        if (count == 0) {
-            throw std::runtime_error("Queue is empty");
-        }
+        std::unique_lock<std::mutex> lock(mtx);
+        cv.wait(lock, [this]() { return count > 0; }); //Thread only wakes up when count > 0
 
         T element = content[oldest];
         oldest = (oldest + 1) % capacity;
@@ -44,10 +46,13 @@ public:
     }
 
     int Count(){
+        //std::unique_lock calls unlock on the mutex in its destructor if some exception occurs the mutex will be unlocked
+        std::unique_lock<std::mutex> lock(mtx); // lock object to protect count 
         return(count);
     }
 
     int Size(){
+        // No lock needed because capacity is not modified
         return(capacity);
     }
 
@@ -57,6 +62,9 @@ private:
     int oldest;      // Index of the oldest element.
     int next;      // Index where the next element will be inserted.
     int count;     // Current number of elements.
+
+    std::mutex mtx;             // Mutex to protect access to shared data.
+    std::condition_variable cv; // Condition variable for blocking in Pop.
 };
 
 #endif // QUEUE_H
