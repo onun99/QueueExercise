@@ -2,8 +2,9 @@
 *.exe
 
 
-# Ignore the .vscode directory
+# Ignore the .vscode and build directory
 .vscode/
+build/
 
 # Ignore temporary files
 *.tmp
