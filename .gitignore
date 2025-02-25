@@ -5,6 +5,7 @@
 # Ignore the .vscode and build directory
 .vscode/
 build/
+Catch2/
 
 # Ignore temporary files
 *.tmp
