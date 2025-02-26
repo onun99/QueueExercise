@@ -10,7 +10,7 @@ class Queue {
 public:
     // Constructor: creates a queue with the given capacity.
     Queue(int size) : capacity(size), oldest(0), next(0), count(0) {
-        content = new T[capacity]; //returns a pointer to the beginning of the allocated memory block
+        content = new T[capacity]; //returns a pointer to the first element of the allocated memory block
     }
 
     // Destructor: cleans up the allocated array.
@@ -39,8 +39,8 @@ public:
         std::unique_lock<std::mutex> lock(mtx);
         cv.wait(lock, [this]() { return count > 0; }); //Thread only wakes up when count > 0
 
-        T element = content[oldest];
-        oldest = (oldest + 1) % capacity;
+        T element = content[oldest];  //Selects oldest element in Queue
+        oldest = (oldest + 1) % capacity; //Upadtes the oldest element index
         count--;
         return(element);
     }
@@ -49,7 +49,7 @@ public:
     T PopWithTimeout(int milliseconds) {
         std::unique_lock<std::mutex> lock(mtx);
 
-        bool ready = cv.wait_for(lock, std::chrono::milliseconds(milliseconds), [this]() { return count > 0; });
+        bool ready = cv.wait_for(lock, std::chrono::milliseconds(milliseconds), [this]() { return count > 0; }); //Thread only wakes up when count > 0 or defined timout passes
         if (!ready) {
             throw std::runtime_error("Timeout waiting for element");
         }
@@ -59,12 +59,14 @@ public:
         return element;
     }
 
+    //Returns the current number of elements in the Queue
     int Count(){
         //std::unique_lock calls unlock on the mutex in its destructor if some exception occurs the mutex will be unlocked
         std::unique_lock<std::mutex> lock(mtx); // lock object to protect count 
         return(count);
     }
 
+    //Returns the maximum size of the Queue
     int Size(){
         // No lock needed because capacity is not modified
         return(capacity);
@@ -78,7 +80,7 @@ private:
     int count;     // Current number of elements.
 
     std::mutex mtx;             // Mutex to protect access to shared data.
-    std::condition_variable cv; // Condition variable for blocking in Pop.
+    std::condition_variable cv; // Condition variable for POP getting notified when a new element is pushed
 };
 
 #endif // QUEUE_H
